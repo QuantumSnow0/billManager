@@ -127,7 +127,7 @@ export default function Pending() {
               color: "white",
             }}
           >
-            Pending Customers
+            Pending Customers...
           </Text>
         </View>
         <View
