@@ -14,26 +14,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useRouter } from "expo-router";
 import { DataContext } from "../../DataContext";
 import { getCustomers, updateCustomer } from "../../utils/customerUtils";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+
 const { width, height } = Dimensions.get("window");
 
 export default function Pending() {
   const [filtered, setFiltered] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [allBills, setAllBills] = useState([]);
   const [show, setShow] = useState(false);
-  const [selectedDate, setSelectedDate] = useState([]);
-  const [showBill, setShowBill] = useState(false);
   const [date, setDate] = useState(new Date());
   const isoDate = date.toISOString().split("T")[0];
-  const router = useRouter();
   const { data, setData } = useContext(DataContext);
 
   const onChange = (event, selectedDate) => {
@@ -58,53 +52,48 @@ export default function Pending() {
     setAllBills(customerBill);
   }, [data, isoDate]);
 
-  const results = useMemo(() => {
-    return allBills.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(filtered.toLowerCase()) ||
-        item.phone?.includes(filtered)
-    );
-  }, [filtered, allBills]);
-
   const customerByBill = useMemo(() => {
-    return results.flatMap((customer) =>
+    return allBills.flatMap((customer) =>
       customer.bill.map((bills) => ({
         name: customer.name,
-        billId: customer.billId,
+        customerId: customer.customerId,
         location: customer.location,
         avatarImg: customer.avatarImg,
-        amount: customer.amount,
-        time: customer.time,
         profile: customer.profile,
         ...bills,
       }))
     );
-  }, [filtered, allBills]);
+  }, [allBills]);
 
-  const updateStatus = async (customerId) => {
+  const updateStatus = async (billId, customerId) => {
     try {
+      // Get the latest customers list
       const fetchCustomers = await getCustomers();
 
+      // Find the correct customer and update their bill status
       const updatedCustomers = fetchCustomers.map((customer) => {
-        if (customer.bill) {
+        if (customer.customerId === customerId) {
           return {
             ...customer,
             bill: customer.bill.map((bill) =>
-              bill.billId === customerId ? { ...bill, status: "paid" } : bill
+              bill.billId === billId ? { ...bill, status: "paid" } : bill
             ),
           };
         }
         return customer;
       });
 
-      const updatedCustomer = updatedCustomers.find((customer) =>
-        customer.bill.some((bill) => bill.billId === customerId)
+      // Find the updated customer
+      const updatedCustomer = updatedCustomers.find(
+        (customer) => customer.customerId === customerId
       );
 
+      // Update the customer in the database
       if (updatedCustomer) {
         await updateCustomer(updatedCustomer);
       }
 
+      // Update local state immediately for UI feedback
       setData((prevData) =>
         prevData.map((item) =>
           item.customerId === updatedCustomer?.customerId
@@ -161,13 +150,7 @@ export default function Pending() {
         </View>
       </LinearGradient>
 
-      <View
-        style={{
-          flex: 1,
-          paddingHorizontal: width * 0.05,
-          paddingTop: height * 0.02,
-        }}
-      >
+      <View style={{ flex: 1, paddingHorizontal: width * 0.05, paddingTop: height * 0.02 }}>
         <TouchableOpacity onPress={() => setShow(true)}>
           <View
             style={{
@@ -219,60 +202,15 @@ export default function Pending() {
                 }}
                 resizeMode="stretch"
               />
-              <View
-                style={{
-                  flex: 1,
-                  paddingLeft: 20,
-                }}
-              >
-                <View className="flex flex-row gap-2 items-center mb-1">
-                  <FontAwesome6
-                    name="user-large"
-                    size={width * 0.05}
-                    color="#12708a"
-                  />
-                  <Text
-                    style={{
-                      fontSize: width * 0.05,
-                      fontWeight: "bold",
-                      color: "#12708a",
-                    }}
-                  >
-                    {item.name}
-                  </Text>
-                </View>
-                <View className="flex flex-row gap-2 items-center mb-1">
-                  <FontAwesome5
-                    name="money-bill"
-                    size={width * 0.04}
-                    color="#12708a"
-                  />
-                  <Text style={{ fontSize: width * 0.04 }}>
-                    ksh: {item.amount}
-                  </Text>
-                </View>
-                <View className="flex flex-row gap-2 items-center mb-1">
-                  <FontAwesome5
-                    name="location-arrow"
-                    size={width * 0.04}
-                    color="#12708a"
-                  />
-                  <Text style={{ fontSize: width * 0.04, color: "gray" }}>
-                    {item.location}
-                  </Text>
-                </View>
-                <View className="flex flex-row gap-2 items-center mb-1">
-                  <FontAwesome5
-                    name="clock"
-                    size={width * 0.04}
-                    color="#12708a"
-                  />
-                  <Text style={{ fontSize: width * 0.04, color: "gray" }}>
-                    {item.time}
-                  </Text>
-                </View>
+              <View style={{ flex: 1, paddingLeft: 20 }}>
+                <Text style={{ fontSize: width * 0.05, fontWeight: "bold", color: "#12708a" }}>
+                  {item.name}
+                </Text>
+                <Text style={{ fontSize: width * 0.04 }}>ksh: {item.amount}</Text>
+                <Text style={{ fontSize: width * 0.04, color: "gray" }}>{item.location}</Text>
+                <Text style={{ fontSize: width * 0.04, color: "gray" }}>{item.time}</Text>
               </View>
-              <TouchableOpacity onPress={() => updateStatus(item.billId)}>
+              <TouchableOpacity onPress={() => updateStatus(item.billId, item.customerId)}>
                 <Text
                   style={{
                     backgroundColor: "#FFD700",
@@ -290,14 +228,7 @@ export default function Pending() {
         />
 
         {show && (
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={date}
-            mode="date"
-            is24Hour={true}
-            display="default"
-            onChange={onChange}
-          />
+          <DateTimePicker value={date} mode="date" is24Hour display="default" onChange={onChange} />
         )}
       </View>
     </SafeAreaView>
