@@ -18,7 +18,6 @@ import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
 import { DataContext } from "../../DataContext";
 import BillModal from "../../components/BillModal";
-import Notifications from "../../components/Notifications";
 import * as Linking from "expo-linking";
 
 const { width } = Dimensions.get("window");
@@ -50,7 +49,7 @@ export default function Customers() {
         item.phone?.includes(filtered)
     );
   }, [filtered, data]);
-
+const organise = results.sort((a, b) => a.name.localeCompare(b.name))
   const renderItem = ({ item }) => (
     <View style={styles.customerContainer} key={item.customerId}>
       <View style={styles.profileContainer}>
@@ -148,7 +147,7 @@ export default function Customers() {
       )}
       <View style={styles.listContainer}>
         <FlatList
-          data={results}
+          data={organise}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={() => (
             <View

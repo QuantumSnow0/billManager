@@ -14,12 +14,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { useRouter } from "expo-router";
 import { DataContext } from "../../DataContext";
 import { getCustomers, updateCustomer } from "../../utils/customerUtils";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
+import {TouchableWithoutFeedback} from "react-native-web";
+import * as Linking from 'expo-linking';
 const { width, height } = Dimensions.get("window");
 
 export default function Pending() {
@@ -56,6 +55,7 @@ export default function Pending() {
     return allBills.flatMap((customer) =>
       customer.bill.map((bills) => ({
         name: customer.name,
+	phone: customer.phone,
         customerId: customer.customerId,
         location: customer.location,
         avatarImg: customer.avatarImg,
@@ -202,7 +202,9 @@ export default function Pending() {
                 }}
                 resizeMode="stretch"
               />
+	<TouchableWithoutFeedback onLongPress = {() => { item.phone && Linking.openURL(`tel: ${item.phone}`) }}>
               <View style={{ flex: 1, paddingLeft: 20 }}>
+		
                 <Text style={{ fontSize: width * 0.05, fontWeight: "bold", color: "#12708a" }}>
                   {item.name}
                 </Text>
@@ -210,6 +212,7 @@ export default function Pending() {
                 <Text style={{ fontSize: width * 0.04, color: "gray" }}>{item.location}</Text>
                 <Text style={{ fontSize: width * 0.04, color: "gray" }}>{item.time}</Text>
               </View>
+     </TouchableWithoutFeedback>
               <TouchableOpacity onPress={() => updateStatus(item.billId, item.customerId)}>
                 <Text
                   style={{
