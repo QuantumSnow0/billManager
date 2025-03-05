@@ -163,7 +163,7 @@ export default function Pending() {
               marginBottom: height * 0.02,
             }}
           >
-            <Entypo name="calendar" size={width * 0.07} color="#12708a" />
+            <Ionicons name="calendar" size={width * 0.07} color="#12708a" />
             <Text
               style={{
                 fontSize: width * 0.05,
